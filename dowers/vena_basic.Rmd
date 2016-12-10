@@ -1,0 +1,240 @@
+---
+title: "Stratification of the Late-Middle-Age Moravian nobility according to dowry, replication material"
+author: "Michael Skvrnak"
+date: "June 22, 2016"
+output: html_document
+---
+
+## Loading data
+```{r}
+library(magrittr)
+
+vena_basic <- read.csv("vena_basic.csv", 
+                       stringsAsFactors = FALSE)
+
+vena_basic$sum <- as.numeric(vena_basic$sum)
+
+head(vena_basic)
+```
+
+###Description of the data:
+
+Variables:
+
+* __ID__ - identification number of the dower
+* __rok__ - year of the record
+* __idd__ - identification number of the dynasty
+* __pos__ - status of the recipient (NA - unknown, 0 - high nobility, 
+1 - pauperized high nobility, 2 - lower nobility)
+* __idd.1__
+* __pau__ - status of the donor (0 - high nobility, 
+1 - pauperized high nobility)
+* __sum__ - the value of the dower
+* __vec__ - widower (1)/non-widower(0)
+* __va__ - widow (1)/non-widow(0)
+* __addtrans__ - no changes to the dower (0) / adding to the dower (1) / transfer of the dower to different assets (2)
+
+## Ratio between dower and dowry
+```{r}
+library(ggplot2)
+
+# complete observations only
+dowry <- c(200, 1000, 250, 200, 350, 600, 100, 200, 200)
+dower <- c(260, 1000, 250, 500, 500, 1000, 150, 200, 500)
+coefs <- dower/dowry
+
+#mean(coefs)
+summary(coefs)
+
+df <- data.frame(dowry = dowry, dower = dower, coefs = coefs)
+
+ggplot(data = df, aes(x = coefs)) + 
+  geom_histogram(bins = 10, 
+                 color = "black", 
+                 fill = "white") + 
+  xlab("Ratio between dower and dowry") + 
+  ylab("Number of observations") + 
+  ggtitle("Figure 1: Ratio between dower and dowry")
+
+
+```
+
+
+*"According to Vsehrd, the dower should be 2.5 times higher than the dowry"*
+
+That does not hold true. Although we know both the values of dower 
+and dowry only in nine cases, the dower reached the ratio of 2.5 only 
+in 2 of them. In the rest of the observations, it did not reach
+even 2 and the most common ratio was 1. 
+
+
+## EDA: Dowers in time 
+
+```{r}
+
+dar <- ggplot(data = vena_basic, aes(x = rok, y = sum, color = factor(pau))) + geom_jitter() + 
+  labs(x = "Year", y = "Value of the dower", color = "Status of donor") + theme(legend.position = "bottom") + 
+  scale_color_manual(values = c("black", "red"), 
+                     labels = c("High nobility", 
+                              "Pauperized high nobility")) + 
+  ggtitle("Figure 3: Dower by the status of donors")
+dar
+
+prijem <- ggplot(data = vena_basic, aes(x = rok, y = sum, color = factor(pos)))
+prijem + geom_jitter() + 
+  labs(x = "Year", y = "Value of the dower", 
+       color = "Status of recipient") + 
+  theme(legend.position = "bottom") + 
+  scale_color_manual(values = c("grey", "blue", "green", "red"), 
+                     labels = c( "Unknown", "High nobility", 
+                               "Pauperized nobility",
+                               "Lower nobility")) + 
+  ggtitle("Figure 4: Dower by the status of recipient")
+
+
+vena_basic$addtrans[vena_basic$addtrans == "?"] <- NA
+
+trans <- ggplot(data = vena_basic, 
+                aes(x = rok, y = sum, 
+                    color = factor(addtrans)))
+trans + geom_jitter() + 
+  labs(x = "Year", y = "Value of the dower", 
+       color = "Changes in dower") + 
+  theme(legend.position = "bottom") + 
+  scale_color_manual(values = c("blue", "green", "red"), 
+                     labels = c("Regular dower", 
+                              "Adding to the dower", 
+                              "Transfer of the dower")) + 
+  ggtitle("Figure 5: Adding to and transferring of dowers")
+
+vdovec <- ggplot(data = vena_basic, 
+                 aes(x = rok, y = sum, color = factor(vec)))
+vdovec + geom_jitter() + 
+  labs(x = "Year", y = "Value of the dower", color = "") + 
+  theme(legend.position = "bottom") + 
+  scale_color_manual(values = c("blue", "red"), 
+                     labels = c("Non-widower", "Widower")) + 
+  ggtitle("Figure 6: Dowers given by  widowers")
+
+vdovy <- ggplot(data = vena_basic, 
+                aes(x = rok, y = sum, color = factor(va)))
+vdovy + geom_jitter() + 
+  labs(x = "Year", y = "Value of the dower", color = "") + 
+  theme(legend.position = "bottom") + 
+  scale_color_manual(values = c("blue", "red"), 
+                     labels = c("Non-widow", "Widow")) + 
+  ggtitle("Figure 7: Dowers received by widows")
+```
+
+
+## Charts 2: Size of the dower
+```{r}
+#plot <- ggplot(data=vena_basic, aes(x=sum, y=pau))
+#plot + geom_point()
+
+# Size of the dower by the status of the donor
+plot2 <- ggplot(data = vena_basic, aes(x = factor(pau), y = sum))
+plot2 + geom_jitter() + 
+  geom_boxplot(color = "red", fill = NA, outlier.colour = NA) + 
+  coord_flip() + 
+  labs(y = "Value of the dower", x = "Status of the donor") 
+
+# Size of the dower by the status of the recipient
+plot3 <- ggplot(data = vena_basic, aes(x = factor(pos), y = sum))
+plot3 + geom_jitter() + 
+  geom_boxplot(color = "red", fill = NA, outlier.colour = NA) + 
+  coord_flip() + 
+  labs(y = "Value of the dower", x = "Status of the recipient")
+
+hist2 <- ggplot(data = vena_basic, aes(x = sum))
+hist2 + geom_histogram(color = "black", fill = "white") + 
+  labs(x = "Value of the dower", y = "Number of cases") + 
+  ggtitle("Figure 2: Size of dowers")
+
+summary(vena_basic$sum)
+```
+
+
+
+## Correlations
+```{r}
+# Correlation between dower and status of the donors
+cor(vena_basic$sum[!is.na(vena_basic$sum == TRUE)], 
+    vena_basic$pau[!is.na(vena_basic$sum == TRUE)], 
+    method = "pearson")
+
+# Correlation between dower and status of the recipient 
+# (excluding the unknown dynasties)
+kor2 <- vena_basic[vena_basic$pos != "?", ]
+kor2$pos <- as.numeric(kor2$pos)
+cor(kor2$pos[!is.na(kor2$sum == TRUE)], 
+    kor2$sum[!is.na(kor2$sum == TRUE)], 
+    method = "spearman")
+
+```
+
+The correlation coefficient indicate that both the status of the donor
+and the recipient influenced the size of the dower. In particular, 
+higher status led to higher dower.
+
+
+
+```{r}
+# Who married who (absolute numbers)
+table(vena_basic$pau, vena_basic$pos)
+
+
+# Who married who (row percent)
+prop.table(table(vena_basic$pau, vena_basic$pos), 1)
+
+```
+The tables show that the groom from high nobility married
+predominantly brides from high nobility. However, grooms from
+pauperized dynasties had higher chances to marry a bride from
+higher nobility than the other way around. 
+
+## The regression model of dower 
+
+Hypotheses:
+
+H1: Higher the status of the donor, the higher the value of the
+dower.
+
+H2: Higher the status of the recipient, the higher the value of
+the dower.
+
+H3: Widows received lower dowers than non-widows.
+
+H4: Widowers gave lower dower than non-widowers because it is 
+expected that they have children from previous marriage.
+
+H5: Dowers to which were added later were lower than the rest
+(because they were given by young noblemen who had not much
+capital)
+
+```{r}
+# Recode the status of the recipient into two categories
+## 0 = high nobility
+## 1 = the rest (pauperized, lower, unknown dynasties)
+vena_basic$pos[vena_basic$pos != 0] <- 1
+
+model1 <- lm(log1p(sum) ~ pau + factor(pos), data = vena_basic)
+summary(model1)
+plot(model1)
+
+model2 <- update(model1, . ~ . + va)
+summary(model2)
+
+model3 <- update(model2, . ~ . + vec)
+summary(model3)
+
+## Recode the addtrans variables so that:
+## 1 = adding to the dower
+## 0 = the rest (no change, transfer of the dower)
+vena_basic$addtrans[vena_basic$addtrans != 1] <- 0
+
+model4 <- update(model3, . ~ . + factor(addtrans))
+summary(model4)
+
+```
+
